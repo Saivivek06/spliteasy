@@ -337,3 +337,32 @@ Final implementation decisions, testing, deployment, validation, and debugging w
 - Socket.io uses both websocket and polling transports for Railway compatibility
 - Avatar colors are randomly assigned from a preset palette at registration
 - Group creator is always admin; admins can remove non-creator members
+
+- ## Major Changes During Development
+
+1. Initial deployment used localhost URLs for frontend-backend communication.
+   Updated to Railway production URLs during deployment.
+
+2. Registration initially failed in production because the Railway PostgreSQL database did not contain the Prisma schema.
+   Resolved by connecting Prisma to the Railway PostgreSQL instance and running:
+   npx prisma db push
+
+3. CORS configuration was updated to allow requests from the deployed frontend domain.
+
+4. Added Railway environment variables:
+   - DATABASE_URL
+   - JWT_SECRET
+   - FRONTEND_URL
+
+5. Frontend deployment was updated to serve the production React build correctly using Railway.
+
+   ## Deployment URLs
+
+Frontend:
+https://wonderful-dream-production-a8d7.up.railway.app
+
+Backend:
+https://spliteasy-production-a979.up.railway.app
+
+Repository:
+https://github.com/Saivivek06/spliteasy
