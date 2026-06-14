@@ -1,368 +1,656 @@
 # AI_CONTEXT.md — SplitEasy
 
-This file is the single source of truth for the SplitEasy project.
-Another developer or AI agent should be able to read this file and rebuild a similar app.
+## Purpose
+
+This document serves as the complete source of truth for the SplitEasy project.
+
+It captures product understanding, scope, architecture, engineering decisions, implementation details, deployment configuration, AI collaboration process, and known limitations.
+
+The objective is that another developer or AI system should be able to reproduce a functionally similar application using this document.
 
 ---
 
-## Product Understanding
+# Project Overview
 
-SplitEasy is a simplified Splitwise clone for tracking shared expenses within groups.
-Core jobs: track who paid what, calculate who owes whom, and allow debt settlement.
+## Product Name
 
----
+SplitEasy
 
-## Product Scope (MVP)
+## Project Goal
 
-### In scope
-- Email + password authentication (JWT)
-- Create and manage groups (create, invite by username, remove members)
-- Add expenses with 4 split types: equal, unequal, percentage, by share
-- Per-expense real-time chat (Socket.io)
-- Group-wise balance summary + simplified debt view (greedy algorithm)
-- Individual dashboard showing total owed / total owing
-- Record settlements (debt payments)
+SplitEasy is a simplified Splitwise-inspired expense sharing application that allows users to:
 
-### Out of scope
-- Email verification
-- Profile pictures / file uploads
-- Currency conversion (INR only)
-- Push / email notifications
-- Recurring expenses
-- Activity feed / audit trail
+* Create groups
+* Add shared expenses
+* Split expenses using multiple strategies
+* View balances
+* Record settlements
+* Communicate through real-time expense discussions
+
+The project was built as a full-stack software engineering internship assignment focused on product understanding, AI-assisted development, deployment, and reproducibility.
 
 ---
 
-## User Personas
+# Product Research
 
-1. **Group creator (admin)** — Creates the group, adds members, can remove members, can delete any expense
-2. **Member** — Can add expenses, record settlements, view balances. Can delete own expenses
+## Product Studied
+
+Splitwise
+
+## Core Workflows Identified
+
+### User Management
+
+* Register account
+* Login
+* Join expense groups
+
+### Group Management
+
+* Create group
+* Add members
+* Remove members
+* View group balances
+
+### Expense Management
+
+* Add expense
+* Split expense
+* Track debts
+* View balances
+
+### Settlement Workflow
+
+* Record payments
+* Reduce outstanding balances
+
+### Communication Workflow
+
+* Discuss expenses using comments/messages
 
 ---
 
-## Data Model
+# MVP Scope
 
-### Users
-- id, email (unique), username (unique), displayName, passwordHash, avatarColor, createdAt
+## Included Features
+
+### Authentication
+
+* User registration
+* User login
+* JWT-based session handling
 
 ### Groups
-- id, name, description, color, createdById, createdAt
 
-### GroupMembers
-- id, groupId, userId, role (admin|member), joinedAt
-- Unique constraint: (groupId, userId)
-
-### Expenses
-- id, groupId, description, amount, currency (INR default), splitType (equal|unequal|percentage|share), paidById, createdAt, updatedAt
-
-### ExpenseSplits
-- id, expenseId, userId, amount, percentage (nullable), shares (nullable), settled (boolean)
-- Unique constraint: (expenseId, userId)
-
-### Settlements
-- id, groupId, fromId, toId, amount, note, createdAt
-
-### Messages
-- id, expenseId, userId, content, createdAt
-
----
-
-## Split Type Logic
-
-### Equal
-- amount / number_of_members per person
-- Rounding: first person absorbs remainder
-
-### Unequal
-- Each person's exact amount is specified
-- Validation: sum of amounts must equal total (within ₹0.01)
-
-### Percentage
-- Each person gets a % of total
-- Validation: percentages must sum to 100 (within 0.01%)
-
-### By Share
-- Each person gets N shares
-- Person's amount = (their_shares / total_shares) × total
-- No validation needed (any share counts work)
-
----
-
-## Balance Calculation
-
-1. For each expense: paidBy gets +amount, each split member gets -split.amount
-2. For each settlement: fromId gets +amount (they paid it), toId gets -amount (received)
-3. Net result per user = sum of above
-4. Simplified debts use greedy algorithm: sort creditors (positive balance) and debtors (negative), match largest creditor with largest debtor, repeat
-
----
-
-## API Design
-
-### Auth
-- POST /api/auth/register — { email, username, displayName, password }
-- POST /api/auth/login — { email, password }
-- GET /api/auth/me — returns current user
-
-### Groups
-- GET /api/groups — user's groups
-- POST /api/groups — { name, description, color }
-- GET /api/groups/:id — group detail
-- POST /api/groups/:id/members — { username } (admin only)
-- DELETE /api/groups/:id/members/:userId (admin only)
-- GET /api/groups/:id/balances — { memberBalances, debts }
+* Create groups
+* Add users by username
+* Remove users
+* View members
 
 ### Expenses
-- POST /api/expenses — { groupId, description, amount, splitType, paidById, memberIds, splitData }
-- GET /api/expenses/group/:groupId
-- GET /api/expenses/:id
-- DELETE /api/expenses/:id (paidBy or admin)
-- GET /api/expenses/my-balances — { totalOwed, totalOwe }
+
+* Equal split
+* Unequal split
+* Percentage split
+* Share-based split
+
+### Balances
+
+* Group-level balances
+* Individual summaries
+* Debt simplification
 
 ### Settlements
-- POST /api/settlements — { groupId, toId, amount, note }
-- GET /api/settlements/group/:groupId
 
-### Messages
-- GET /api/messages/:expenseId
+* Record payments
+* Settlement history
 
-### Socket.io Events
-- Client emits: join_expense(expenseId), leave_expense(expenseId), send_message({ expenseId, content })
-- Server emits: new_message(messageObject)
-- Auth: JWT token passed in socket.handshake.auth.token
+### Real-Time Features
+
+* Expense-specific chat
+* Socket.io updates
 
 ---
 
-## Frontend Architecture
+## Out of Scope
 
-### Pages
-- /login — LoginPage
-- /register — RegisterPage
-- / — DashboardPage (groups overview, global balances)
-- /groups/:id — GroupPage (tabs: Expenses, Balances, Settlements, Members)
-- /expenses/:id — ExpensePage (split detail + real-time chat)
+To keep the project achievable within the assignment timeline, the following features were intentionally excluded:
 
-### Components
-- Layout — sidebar with group nav, balance summary, user info
-- ExpenseForm — modal, handles all 4 split types with live validation
-- SettleModal — record payment modal with pre-fill from balance data
-
-### State management
-- AuthContext — user, login(), logout()
-- ToastContext — success/error notifications
-- Local useState per page — no global state library needed at this scale
-
-### API Layer
-- Axios instance with base URL + JWT interceptor
-- 401 responses auto-logout + redirect
-
-### Socket Layer
-- Singleton socket instance (one connection per session)
-- useExpenseSocket hook joins/leaves expense rooms, receives real_time messages
+* Email verification
+* Social login
+* File uploads
+* Receipt scanning
+* Multi-currency support
+* Recurring expenses
+* Notifications
+* Activity feeds
+* Payment gateway integration
 
 ---
 
-## Tech Stack
+# User Roles
 
-- **Frontend**: React 18, Vite, React Router v6, Axios, Socket.io-client
-- **Backend**: Node.js, Express, Socket.io, Prisma ORM
-- **Database**: PostgreSQL
-- **Auth**: JWT (jsonwebtoken), bcryptjs
-- **Fonts**: Inter (body), Syne (display)
-- **Design**: Custom CSS with CSS variables, dark theme (#0f0f13 bg, #7c6aff accent)
+## Group Admin
 
----
+Responsibilities:
 
-## Deployment Plan (Railway)
+* Create groups
+* Add members
+* Remove members
+* Delete expenses
 
-1. Push code to GitHub
-2. Create new project on Railway (railway.app)
-3. Add a PostgreSQL database service
-4. Add a Node.js service from GitHub repo, root directory: backend/
-5. Set environment variables in Railway:
-   - DATABASE_URL (auto-set by Railway if linked)
-   - JWT_SECRET
-   - FRONTEND_URL (set after frontend deploy)
-   - PORT (Railway sets this automatically)
-6. Railway start command: `node src/index.js`
-7. Add build command: `npx prisma generate && npx prisma db push`
-8. Deploy frontend to Railway as a static site (or Vercel):
-   - Build: `npm run build`
-   - Output: dist/
-   - Set VITE_API_URL and VITE_SOCKET_URL to backend Railway URL
+## Member
+
+Responsibilities:
+
+* Add expenses
+* View balances
+* Record settlements
+* Participate in chat
 
 ---
 
-## Testing Plan
+# Technology Stack
 
-Manual testing checklist:
-- [ ] Register two users
-- [ ] Create a group as user 1, add user 2 by username
-- [ ] Add expense (equal split), verify both users see correct balances
-- [ ] Add expense (unequal split), verify validation
-- [ ] Add expense (percentage split), verify validation
-- [ ] Add expense (share split), verify amounts calculated correctly
-- [ ] Open expense, send chat messages, verify real-time in second browser tab
-- [ ] Record a settlement, verify balance changes
-- [ ] Remove member (admin), verify they're gone
-- [ ] Delete expense, verify balance recalculates
+## Frontend
 
----
+* React 18
+* Vite
+* React Router v6
+* Axios
+* Socket.io Client
 
-## Trade-offs
+## Backend
 
-| Simplified | Reason |
-|---|---|
-| No email verification | Reduces setup complexity |
-| Invite by username (not email link) | Faster to implement |
-| INR only | Single currency scope |
-| No expense editing | Harder state management; delete+recreate instead |
-| Greedy debt simplification | Simple and correct for small groups |
-| No pagination | MVP scope; not needed under 100 expenses |
+* Node.js
+* Express.js
+* Socket.io
 
----
+## Database
 
-## Known Limitations
+* PostgreSQL
 
-- Balance calculation loads all expenses at once (not paginated) — fine for MVP
-- Socket connection is a singleton, not cleaned up on logout (refresh handles it)
-- No optimistic UI updates — always waits for server response
-- Group color is decorative only, not used in balance grouping
-- Settlement does not mark individual ExpenseSplit rows as settled (tracked separately)
+## ORM
+
+* Prisma
+
+## Authentication
+
+* JWT
+* bcryptjs
+
+## Deployment
+
+* Railway
 
 ---
 
-## Implementation Notes
-# Key Prompts Used
+# Database Design
 
-## Initial Assignment Prompt
+## User
 
-"You are a junior engineer helping me complete an internship assignment.
+Fields:
 
-The assignment is to reverse engineer Splitwise, scope a realistic 3-day version, and build a working deployed app.
+* id
+* email
+* username
+* displayName
+* passwordHash
+* avatarColor
+* createdAt
 
-Important instructions:
+Constraints:
 
-1. Do not assume product requirements.
-2. Do not jump directly into implementation.
-3. Ask me detailed questions about product scope, UX, workflows, edge cases, and engineering decisions.
-4. Ask about every implementation detail needed to build the app.
-5. After each answer I give, update a Markdown file called AI_CONTEXT.md.
-6. AI_CONTEXT.md must become the source of truth for the entire project.
-7. The final app must be buildable from AI_CONTEXT.md.
-8. Another evaluator should be able to paste AI_CONTEXT.md into the same AI tool and recreate a similar app.
-9. Before writing code, produce a build plan based only on the agreed context.
-10. During implementation, keep updating AI_CONTEXT.md whenever requirements, architecture, schema, UI, or logic changes.
-11. Do not recommend technical solutions. Your job is to let me think through the technical solution."
+* email unique
+* username unique
 
 ---
 
-## Database Design Prompt
+## Group
 
-"Design a PostgreSQL database schema for a Splitwise-inspired application supporting users, groups, group memberships, expenses, settlements, expense comments, and multiple expense splitting methods."
+Fields:
 
----
-
-## Expense Splitting Logic Prompt
-
-"Implement equal, unequal, percentage-based, and share-based expense splitting with validation rules and balance calculations."
-
----
-
-## Authentication Prompt
-
-"Implement JWT-based authentication with secure password hashing using bcrypt and protected API routes."
+* id
+* name
+* description
+* color
+* createdById
+* createdAt
 
 ---
 
-## Real-Time Chat Prompt
+## GroupMember
 
-"Implement real-time expense comments using Socket.io. Users viewing the same expense should receive new messages instantly."
+Fields:
 
----
+* id
+* groupId
+* userId
+* role
+* joinedAt
 
-## Frontend Architecture Prompt
+Constraint:
 
-"Design a React frontend with pages for authentication, dashboard, group details, expense details, balances, settlements, and expense chat."
+* unique(groupId, userId)
 
----
+Purpose:
 
-## Deployment Prompt
-
-"Deploy a React frontend, Express backend, and PostgreSQL database using Railway. Configure environment variables, production URLs, Prisma, and Socket.io."
-
----
-
-## Debugging Prompts Used During Development
-
-### CORS Issue
-
-"Diagnose and fix CORS errors occurring between the deployed frontend and backend services."
-
-### Railway Deployment Issue
-
-"Investigate why API requests are failing after deployment despite successful builds."
-
-### Database Migration Issue
-
-"Diagnose Prisma errors indicating that database tables do not exist in the production PostgreSQL database."
-
-### Production Database Fix
-
-"Connect Prisma to the Railway PostgreSQL database and synchronize the schema using Prisma commands."
+Represents group membership and permissions.
 
 ---
 
-## AI Collaboration Notes
+## Expense
 
-AI was used as a development collaborator for:
+Fields:
 
-* Product planning
-* Architecture design
-* Database schema design
-* API design
-* React frontend implementation
-* Express backend implementation
-* Prisma ORM integration
-* Socket.io integration
-* Railway deployment
-* Debugging production issues
-* Documentation generation
+* id
+* groupId
+* description
+* amount
+* currency
+* splitType
+* paidById
+* createdAt
+* updatedAt
 
-Final implementation decisions, testing, deployment, validation, and debugging were performed manually by the developer.
+---
 
+## ExpenseSplit
 
-- Prisma's `@@unique([groupId, userId])` prevents duplicate group memberships
-- Split rounding: first member in the array absorbs rounding remainder (< ₹0.01)
-- Socket.io uses both websocket and polling transports for Railway compatibility
-- Avatar colors are randomly assigned from a preset palette at registration
-- Group creator is always admin; admins can remove non-creator members
+Fields:
 
-- ## Major Changes During Development
+* id
+* expenseId
+* userId
+* amount
+* percentage
+* shares
+* settled
 
-1. Initial deployment used localhost URLs for frontend-backend communication.
-   Updated to Railway production URLs during deployment.
+Constraint:
 
-2. Registration initially failed in production because the Railway PostgreSQL database did not contain the Prisma schema.
-   Resolved by connecting Prisma to the Railway PostgreSQL instance and running:
-   npx prisma db push
+* unique(expenseId, userId)
 
-3. CORS configuration was updated to allow requests from the deployed frontend domain.
+Purpose:
 
-4. Added Railway environment variables:
-   - DATABASE_URL
-   - JWT_SECRET
-   - FRONTEND_URL
+Stores the calculated share of each participant.
 
-5. Frontend deployment was updated to serve the production React build correctly using Railway.
+---
 
-   ## Deployment URLs
+## Settlement
+
+Fields:
+
+* id
+* groupId
+* fromId
+* toId
+* amount
+* note
+* createdAt
+
+Purpose:
+
+Represents debt repayment transactions.
+
+---
+
+## Message
+
+Fields:
+
+* id
+* expenseId
+* userId
+* content
+* createdAt
+
+Purpose:
+
+Supports expense-level discussion.
+
+---
+
+# Expense Splitting Logic
+
+## Equal Split
+
+Formula:
+
+Total Expense ÷ Number of Members
+
+Rounding:
+
+The first participant absorbs any fractional remainder.
+
+---
+
+## Unequal Split
+
+Each participant receives a manually specified amount.
+
+Validation:
+
+Sum of all participant amounts must equal the expense total.
+
+---
+
+## Percentage Split
+
+Each participant receives a percentage allocation.
+
+Validation:
+
+Total percentages must equal 100%.
+
+---
+
+## Share-Based Split
+
+Formula:
+
+Participant Amount =
+(Participant Shares ÷ Total Shares) × Expense Amount
+
+---
+
+# Balance Calculation Strategy
+
+## Step 1
+
+For each expense:
+
+* Payer receives +expense amount
+* Participants receive −their split amount
+
+## Step 2
+
+For each settlement:
+
+* Sender receives +settlement amount
+* Receiver receives −settlement amount
+
+## Step 3
+
+Aggregate all values per user.
+
+## Step 4
+
+Generate simplified debt recommendations using a greedy matching algorithm:
+
+1. Sort creditors descending.
+2. Sort debtors descending.
+3. Match largest creditor with largest debtor.
+4. Repeat until all balances are settled.
+
+---
+
+# API Design
+
+## Authentication
+
+POST /api/auth/register
+
+POST /api/auth/login
+
+GET /api/auth/me
+
+---
+
+## Groups
+
+GET /api/groups
+
+POST /api/groups
+
+GET /api/groups/:id
+
+POST /api/groups/:id/members
+
+DELETE /api/groups/:id/members/:userId
+
+GET /api/groups/:id/balances
+
+---
+
+## Expenses
+
+POST /api/expenses
+
+GET /api/expenses/group/:groupId
+
+GET /api/expenses/:id
+
+DELETE /api/expenses/:id
+
+GET /api/expenses/my-balances
+
+---
+
+## Settlements
+
+POST /api/settlements
+
+GET /api/settlements/group/:groupId
+
+---
+
+## Messages
+
+GET /api/messages/:expenseId
+
+---
+
+# Real-Time Architecture
+
+Socket.io rooms are used for expense-specific communication.
+
+Client Events:
+
+* join_expense
+* leave_expense
+* send_message
+
+Server Events:
+
+* new_message
+
+Authentication:
+
+JWT token passed during socket connection.
+
+---
+
+# Frontend Architecture
+
+## Pages
+
+/login
+
+/register
+
+/
+
+/groups/:id
+
+/expenses/:id
+
+---
+
+## State Management
+
+### AuthContext
+
+Maintains:
+
+* current user
+* login state
+* logout state
+
+### ToastContext
+
+Maintains:
+
+* success notifications
+* error notifications
+
+### Local Component State
+
+Used for page-level interactions.
+
+No Redux or Zustand was used because application complexity did not justify additional state-management overhead.
+
+---
+
+# Deployment Architecture
+
+## Production URLs
 
 Frontend:
+
 https://wonderful-dream-production-a8d7.up.railway.app
 
 Backend:
+
 https://spliteasy-production-a979.up.railway.app
 
 Repository:
+
 https://github.com/Saivivek06/spliteasy
+
+---
+
+## Deployment Process
+
+1. Push code to GitHub.
+2. Create Railway project.
+3. Provision PostgreSQL service.
+4. Deploy backend service.
+5. Configure environment variables.
+6. Deploy frontend service.
+7. Connect frontend and backend URLs.
+8. Push Prisma schema to production database.
+9. Perform smoke testing.
+
+---
+
+# Testing Strategy
+
+The following scenarios were validated:
+
+* Registration
+* Login
+* Group creation
+* Member invitation
+* Member removal
+* Equal split expenses
+* Unequal split expenses
+* Percentage split expenses
+* Share split expenses
+* Balance calculations
+* Settlements
+* Real-time chat
+* Production deployment
+
+---
+
+# Major Changes During Development
+
+### Deployment URL Migration
+
+Initial builds referenced localhost endpoints.
+
+Updated to Railway production URLs.
+
+### CORS Resolution
+
+Production requests were blocked by CORS configuration.
+
+Resolved by updating FRONTEND_URL in backend deployment variables.
+
+### Database Synchronization Issue
+
+Production registration failed because the Railway PostgreSQL database did not contain required Prisma tables.
+
+Resolved by connecting Prisma to the Railway PostgreSQL database and executing:
+
+npx prisma db push
+
+### Production Frontend Deployment
+
+Frontend deployment configuration was updated to correctly serve the production React build.
+
+---
+
+# Trade-Offs
+
+| Decision                   | Reason                                    |
+| -------------------------- | ----------------------------------------- |
+| Username invitations       | Simpler than email invitation system      |
+| Single currency (INR)      | Reduced complexity                        |
+| No expense editing         | Faster MVP delivery                       |
+| Manual settlements         | No payment integration required           |
+| No pagination              | Data volume expected to remain small      |
+| Greedy debt simplification | Easy to understand and sufficient for MVP |
+
+---
+
+# Known Limitations
+
+* No expense editing workflow
+* No recurring expenses
+* No multi-currency support
+* No push notifications
+* No email verification
+* No payment gateway integration
+* No automated settlement reconciliation
+
+---
+
+# Key Prompts Used
+
+## Product Planning
+
+"Reverse engineer Splitwise and identify the minimum viable workflows required for a 2–3 day implementation."
+
+## Database Design
+
+"Design a PostgreSQL schema for a Splitwise clone supporting users, groups, expenses, settlements, and expense discussions."
+
+## Expense Logic
+
+"Implement equal, unequal, percentage, and share-based expense splitting with validation."
+
+## Authentication
+
+"Implement JWT authentication with secure password hashing."
+
+## Real-Time Communication
+
+"Implement expense-level chat using Socket.io."
+
+## Deployment
+
+"Deploy a React frontend, Express backend, and PostgreSQL database on Railway."
+
+## Production Debugging
+
+"Diagnose CORS, deployment, and Prisma database synchronization issues in Railway."
+
+---
+
+# AI Collaboration Summary
+
+AI tools were used as development collaborators for:
+
+* Product planning
+* Database design
+* Architecture design
+* API design
+* Frontend implementation
+* Backend implementation
+* Deployment guidance
+* Debugging assistance
+* Documentation generation
+
+Final implementation decisions, testing, deployment verification, production debugging, and project submission preparation were completed manually by the developer.
