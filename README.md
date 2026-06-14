@@ -1,117 +1,323 @@
-# SplitEasy — Splitwise Clone
+# SplitEasy – Splitwise Clone
 
-A full-stack expense-splitting app built as an internship assignment for Spreetail.
+## Overview
 
-**AI Used:** Claude (Anthropic) — claude.ai
+SplitEasy is a full-stack expense-sharing application inspired by Splitwise. The platform allows users to create groups, add expenses using multiple split strategies, track balances, record settlements, and communicate through real-time expense discussions.
+
+The project was developed as part of a software engineering internship assignment and demonstrates full-stack application development, database design, authentication, real-time communication, and cloud deployment.
+
+---
+
+## Live Deployment
+
+**Frontend:**
+https://wonderful-dream-production-a8d7.up.railway.app
+
+**Backend API:**
+https://spliteasy-production-a979.up.railway.app
+
+**GitHub Repository:**
+https://github.com/Saivivek06/spliteasy
 
 ---
 
 ## Features
 
-- **Auth** — Register / Login with JWT
-- **Groups** — Create groups, invite members by username, remove members
-- **Expenses** — Add expenses with 4 split types: equal, unequal, percentage, by share
-- **Real-time Chat** — Comment on each expense via Socket.io
-- **Balances** — Group-wise and individual balance summaries using a greedy debt-simplification algorithm
-- **Settlements** — Record debt payments, track history
+### Authentication
+
+* User registration
+* User login
+* JWT-based authentication
+* Protected routes
+
+### Group Management
+
+* Create expense groups
+* Invite members by username
+* View group members
+* Remove members from groups
+
+### Expense Management
+
+* Add expenses within groups
+* Multiple expense splitting methods:
+
+  * Equal Split
+  * Unequal Split
+  * Percentage Split
+  * Share-Based Split
+* Expense history tracking
+
+### Balance Tracking
+
+* Individual balance calculations
+* Group-wise balance summaries
+* Debt simplification logic
+
+### Settlements
+
+* Record payments between members
+* Settlement history tracking
+* Balance updates after settlement
+
+### Real-Time Communication
+
+* Expense-specific chat system
+* Socket.IO powered messaging
+* Live updates without page refresh
 
 ---
 
-## Tech Stack
+## Technology Stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | React 18 + Vite |
-| Backend | Node.js + Express |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Auth | JWT + bcrypt |
-| Real-time | Socket.io |
-| Deployment | Railway |
+| Layer                   | Technology          |
+| ----------------------- | ------------------- |
+| Frontend                | React 18, Vite      |
+| Backend                 | Node.js, Express.js |
+| Database                | PostgreSQL          |
+| ORM                     | Prisma              |
+| Authentication          | JWT, bcrypt         |
+| Real-Time Communication | Socket.IO           |
+| Deployment              | Railway             |
 
 ---
 
-## Local Setup
+## System Architecture
+
+Frontend (React + Vite)
+
+↓
+
+Backend API (Express.js)
+
+↓
+
+Prisma ORM
+
+↓
+
+PostgreSQL Database
+
+↓
+
+Socket.IO (Real-Time Communication)
+
+---
+
+## Database Design
+
+The application uses a relational PostgreSQL database managed through Prisma ORM.
+
+### Core Models
+
+* User
+* Group
+* GroupMember
+* Expense
+* ExpenseSplit
+* Settlement
+* Message
+
+Relationships are designed to support:
+
+* Many-to-many user-group membership
+* One-to-many expense ownership
+* Expense split tracking
+* Settlement records
+* Real-time discussion threads
+
+---
+
+## Local Development Setup
 
 ### Prerequisites
-- Node.js 18+
-- PostgreSQL running locally (or a cloud PostgreSQL URL)
 
-### 1. Clone the repo
+* Node.js 18+
+* PostgreSQL
+* Git
+
+---
+
+### Clone Repository
+
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Saivivek06/spliteasy.git
 cd spliteasy
 ```
 
-### 2. Backend setup
+### Backend Setup
+
 ```bash
 cd backend
-cp .env.example .env
-# Edit .env — set DATABASE_URL and JWT_SECRET
 npm install
-npx prisma db push      # Creates all tables
-npm run dev             # Starts on port 4000
 ```
 
-### 3. Frontend setup
+Create a `.env` file:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/spliteasy"
+JWT_SECRET="your-secret-key"
+PORT=4000
+FRONTEND_URL="http://localhost:5173"
+```
+
+Push database schema:
+
+```bash
+npx prisma db push
+```
+
+Start backend server:
+
+```bash
+npm run dev
+```
+
+---
+
+### Frontend Setup
+
 ```bash
 cd frontend
-cp .env.example .env
-# Edit .env if backend is not on localhost:4000
 npm install
-npm run dev             # Starts on port 5173
 ```
 
-Open http://localhost:5173
+Create a `.env` file:
+
+```env
+VITE_API_URL=http://localhost:4000/api
+VITE_SOCKET_URL=http://localhost:4000
+```
+
+Start frontend:
+
+```bash
+npm run dev
+```
+
+Application will be available at:
+
+```text
+http://localhost:5173
+```
 
 ---
 
 ## Environment Variables
 
-### Backend `.env`
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/spliteasy"
-JWT_SECRET="any-random-secret-string"
-PORT=4000
-FRONTEND_URL="http://localhost:5173"
+### Backend
+
+```env
+DATABASE_URL=
+JWT_SECRET=
+PORT=
+FRONTEND_URL=
 ```
 
-### Frontend `.env`
-```
-VITE_API_URL=http://localhost:4000/api
-VITE_SOCKET_URL=http://localhost:4000
+### Frontend
+
+```env
+VITE_API_URL=
+VITE_SOCKET_URL=
 ```
 
 ---
 
-## Deployment (Railway)
+## API Modules
 
-See `BUILD_PLAN.md` → Deployment section for step-by-step Railway deployment instructions.
+### Authentication
+
+* Register User
+* Login User
+
+### Groups
+
+* Create Group
+* Add Member
+* Remove Member
+* Get Group Details
+
+### Expenses
+
+* Create Expense
+* Fetch Expenses
+* Calculate Balances
+
+### Settlements
+
+* Record Settlement
+* Settlement History
+
+### Messages
+
+* Expense Chat Messages
+* Real-Time Messaging Events
 
 ---
 
-## Project Structure
+## Deployment
 
-```
-spliteasy/
-├── backend/
-│   ├── prisma/schema.prisma     # Database schema
-│   ├── src/
-│   │   ├── index.js             # Entry point
-│   │   ├── middleware/auth.js   # JWT middleware
-│   │   ├── routes/              # Express routes
-│   │   ├── controllers/         # Business logic
-│   │   └── socket/index.js      # Socket.io real-time chat
-│   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── pages/               # Route-level components
-│   │   ├── components/          # Reusable UI
-│   │   ├── context/             # Auth + Toast context
-│   │   ├── hooks/               # useSocket hook
-│   │   └── utils/api.js         # Axios instance
-│   └── .env.example
-├── AI_CONTEXT.md
-├── BUILD_PLAN.md
-└── README.md
-```
+The application is deployed using Railway.
+
+### Services
+
+1. Frontend Service
+
+   * React production build
+   * Static hosting
+
+2. Backend Service
+
+   * Node.js Express server
+   * REST API
+   * Socket.IO server
+
+3. PostgreSQL Database
+
+   * Managed Railway PostgreSQL instance
+   * Prisma ORM integration
+
+Deployment planning and implementation details are documented in `BUILD_PLAN.md`.
+
+---
+
+## AI Usage Disclosure
+
+AI-assisted development tools were used during the project for:
+
+* Project planning
+* Architecture discussion
+* Debugging support
+* Code review assistance
+* Documentation generation
+
+All final implementation decisions, deployment configuration, testing, debugging, and integration were completed by the project author.
+
+Additional details are documented in `AI_CONTEXT.md`.
+
+---
+
+## Testing
+
+The following workflows were successfully tested on the deployed application:
+
+* User Registration
+* User Login
+* Group Creation
+* Group Membership Management
+* Expense Creation
+* Equal Expense Split
+* Unequal Expense Split
+* Percentage Expense Split
+* Share-Based Expense Split
+* Settlement Recording
+* Balance Calculation
+* Real-Time Messaging
+
+---
+
+## Author
+
+Sai Vivek
+
+GitHub: https://github.com/Saivivek06
