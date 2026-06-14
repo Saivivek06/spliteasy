@@ -1,0 +1,100 @@
+.group-page { max-width: 800px; }
+
+.group-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; gap: 16px;
+}
+.group-header-left { display: flex; align-items: center; gap: 16px; }
+.group-color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.group-title { font-size: 26px; font-weight: 800; }
+.group-desc { color: var(--text-2); font-size: 14px; margin-top: 2px; }
+.group-actions { display: flex; gap: 10px; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.tab {
+  padding: 10px 18px; background: none; border: none; cursor: pointer;
+  color: var(--text-2); font-size: 14px; font-weight: 600;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Expenses */
+.expense-list { display: flex; flex-direction: column; gap: 10px; }
+.expense-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; transition: all 0.15s;
+}
+.expense-item:hover { border-color: var(--accent); }
+.expense-icon { font-size: 20px; }
+.expense-info { flex: 1; }
+.expense-desc { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.expense-meta { font-size: 12px; color: var(--text-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.expense-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.expense-amount { font-size: 17px; font-weight: 700; color: var(--text); }
+
+/* Balances */
+.subsection-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; font-size: 12px; }
+.balance-list { display: flex; flex-direction: column; gap: 10px; }
+.balance-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.balance-name { flex: 1; font-size: 15px; font-weight: 500; }
+.balance-val { font-size: 16px; font-weight: 700; }
+.balance-val.pos { color: var(--green); }
+.balance-val.neg { color: var(--red); }
+
+.debt-list { display: flex; flex-direction: column; gap: 10px; }
+.debt-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 14px;
+}
+.debt-arrow { color: var(--text-3); }
+.debt-amount { margin-left: auto; font-weight: 700; color: var(--red); }
+
+.settled-banner {
+  margin-top: 20px; padding: 16px; background: #34d39911; border: 1px solid #34d39933;
+  border-radius: var(--radius-sm); color: var(--green); font-weight: 600; text-align: center;
+}
+
+/* Settlements */
+.settlement-list { display: flex; flex-direction: column; gap: 10px; }
+.settlement-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.settlement-info { flex: 1; font-size: 14px; }
+.settlement-note { color: var(--text-2); }
+.settlement-amount { font-weight: 700; color: var(--green); }
+
+/* Members */
+.member-add-row { margin-bottom: 16px; }
+.add-member-form { display: flex; gap: 10px; }
+.member-list { display: flex; flex-direction: column; gap: 10px; }
+.member-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.member-info { flex: 1; }
+.member-name { font-size: 15px; font-weight: 600; }
+.member-username { font-size: 12px; color: var(--text-3); }
+
+.empty-state {
+  text-align: center; padding: 48px 20px;
+  background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.empty-state p { color: var(--text-2); font-size: 14px; }
+
+@media (max-width: 600px) {
+  .group-header { flex-direction: column; align-items: flex-start; }
+  .tabs { overflow-x: auto; }
+}
