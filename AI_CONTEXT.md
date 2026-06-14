@@ -233,6 +233,104 @@ Manual testing checklist:
 ---
 
 ## Implementation Notes
+# Key Prompts Used
+
+## Initial Assignment Prompt
+
+"You are a junior engineer helping me complete an internship assignment.
+
+The assignment is to reverse engineer Splitwise, scope a realistic 3-day version, and build a working deployed app.
+
+Important instructions:
+
+1. Do not assume product requirements.
+2. Do not jump directly into implementation.
+3. Ask me detailed questions about product scope, UX, workflows, edge cases, and engineering decisions.
+4. Ask about every implementation detail needed to build the app.
+5. After each answer I give, update a Markdown file called AI_CONTEXT.md.
+6. AI_CONTEXT.md must become the source of truth for the entire project.
+7. The final app must be buildable from AI_CONTEXT.md.
+8. Another evaluator should be able to paste AI_CONTEXT.md into the same AI tool and recreate a similar app.
+9. Before writing code, produce a build plan based only on the agreed context.
+10. During implementation, keep updating AI_CONTEXT.md whenever requirements, architecture, schema, UI, or logic changes.
+11. Do not recommend technical solutions. Your job is to let me think through the technical solution."
+
+---
+
+## Database Design Prompt
+
+"Design a PostgreSQL database schema for a Splitwise-inspired application supporting users, groups, group memberships, expenses, settlements, expense comments, and multiple expense splitting methods."
+
+---
+
+## Expense Splitting Logic Prompt
+
+"Implement equal, unequal, percentage-based, and share-based expense splitting with validation rules and balance calculations."
+
+---
+
+## Authentication Prompt
+
+"Implement JWT-based authentication with secure password hashing using bcrypt and protected API routes."
+
+---
+
+## Real-Time Chat Prompt
+
+"Implement real-time expense comments using Socket.io. Users viewing the same expense should receive new messages instantly."
+
+---
+
+## Frontend Architecture Prompt
+
+"Design a React frontend with pages for authentication, dashboard, group details, expense details, balances, settlements, and expense chat."
+
+---
+
+## Deployment Prompt
+
+"Deploy a React frontend, Express backend, and PostgreSQL database using Railway. Configure environment variables, production URLs, Prisma, and Socket.io."
+
+---
+
+## Debugging Prompts Used During Development
+
+### CORS Issue
+
+"Diagnose and fix CORS errors occurring between the deployed frontend and backend services."
+
+### Railway Deployment Issue
+
+"Investigate why API requests are failing after deployment despite successful builds."
+
+### Database Migration Issue
+
+"Diagnose Prisma errors indicating that database tables do not exist in the production PostgreSQL database."
+
+### Production Database Fix
+
+"Connect Prisma to the Railway PostgreSQL database and synchronize the schema using Prisma commands."
+
+---
+
+## AI Collaboration Notes
+
+AI was used as a development collaborator for:
+
+* Product planning
+* Architecture design
+* Database schema design
+* API design
+* React frontend implementation
+* Express backend implementation
+* Prisma ORM integration
+* Socket.io integration
+* Railway deployment
+* Debugging production issues
+* Documentation generation
+
+Final implementation decisions, testing, deployment, validation, and debugging were performed manually by the developer.
+
 
 - Prisma's `@@unique([groupId, userId])` prevents duplicate group memberships
 - Split rounding: first member in the array absorbs rounding remainder (< ₹0.01)
